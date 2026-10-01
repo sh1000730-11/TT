@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🍅 番茄腦征服宇宙之計畫 🧠</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        farm: {
+                            bg: '#EAF5E9',
+                            card: '#FFFDF9',
+                            accent: '#8ED081',
+                            dark: '#385E38',
+                            tomato: '#FF595E',
+                            tomatoHover: '#EE4247',
+                            gold: '#FFCA3A',
+                            clay: '#D4A373'
+                        }
+                    },
+                    fontFamily: {
+                        cute: ['"Zen Maru Gothic"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #EAF5E9;
+            background-image: radial-gradient(#C8E6C9 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(255, 89, 94, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(255, 89, 94, 0.8); }
+        }
+
+        @keyframes bounce-short {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.18); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px) rotate(-3deg); }
+            40%, 80% { transform: translateX(6px) rotate(3deg); }
+        }
+
+        @keyframes evolve-glow {
+            0% { transform: scale(0.8) rotate(-10deg); filter: brightness(1.5); }
+            50% { transform: scale(1.25) rotate(10deg); filter: brightness(2); }
+            100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+        }
+
+        .animate-float { animation: float 3.5s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s infinite; }
+        .animate-bounce-short { animation: bounce-short 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+        .animate-evolve { animation: evolve-glow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: pop-fade 0.8s forwards ease-out;
+            z-index: 50;
+        }
+
+        .combo-text {
+            position: absolute;
+            pointer-events: none;
+            animation: combo-up 0.7s forwards ease-out;
+            font-weight: 900;
+            color: #FF595E;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            z-index: 60;
+        }
+
+        @keyframes pop-fade {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(0.6) rotate(0deg); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.4) rotate(var(--rot)); }
+        }
+
+        @keyframes combo-up {
+            0% { opacity: 1; transform: translate(-50%, -100%) scale(0.8); }
+            50% { opacity: 1; transform: translate(-50%, -180%) scale(1.3); }
+            100% { opacity: 0; transform: translate(-50%, -240%) scale(1); }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #EAF5E9; }
+        ::-webkit-scrollbar-thumb { background: #8ED081; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between items-center p-3 sm:p-6 overflow-x-hidden">
+
+    <!-- 背景音樂 Audio 標籤 -->
+    <audio id="bgmAudio" loop preload="auto">
+        <source src="bgm.mp3" type="audio/mp3">
+        <source src="https://files.catbox.moe/l0b8np.mp3" type="audio/mp3">
+    </audio>
+
+    <div class="w-full max-w-md mx-auto flex flex-col gap-4 pb-20">
+        <header class="bg-farm-card rounded-3xl p-4 shadow-lg border-4 border-farm-accent/40 text-center relative overflow-hidden">
+            <div class="absolute -top-6 -left-6 w-16 h-16 bg-farm-accent/20 rounded-full blur-md"></div>
+            <div class="absolute -bottom-6 -right-6 w-20 h-20 bg-farm-gold/20 rounded-full blur-md"></div>
+            
+            <!-- 右上角音樂控制按鈕 -->
+            <button id="bgmToggleBtn" onclick="toggleBGM()" class="absolute top-2 right-2 bg-white/80 hover:bg-white text-farm-dark p-1.5 px-2.5 rounded-full shadow border border-farm-accent/30 text-xs font-bold transition-all active:scale-95 flex items-center gap-1 z-10">
+                <i id="bgmIcon" class="fa-solid fa-music text-slate-400"></i>
+                <span id="bgmStatusText" class="text-[10px]">音樂 OFF</span>
+            </button>
+
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <span class="text-2xl animate-bounce">🌱</span>
+                <h1 class="text-2xl sm:text-3xl font-black text-farm-dark tracking-wide">番茄腦征服宇宙之計畫</h1>
+                <span class="text-2xl animate-bounce" style="animation-delay: 0.2s;">🍅</span>
+            </div>
+            <p class="text-xs sm:text-sm font-bold text-farm-dark/70">每天乖一點點，成為邪惡番茄腦！</p>
+        </header>
+
+        <main class="bg-farm-card rounded-3xl p-5 shadow-xl border-4 border-farm-accent/50 text-center flex flex-col items-center relative">
+            <div id="stageBadge" class="bg-farm-dark text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-extrabold tracking-wider shadow-md mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-seedling text-farm-gold"></i>
+                <span id="stageBadgeText">階段 1 / 20</span>
+            </div>
+
+            <div class="relative w-48 h-48 sm:w-56 sm:h-56 my-2 flex items-center justify-center">
+                <div id="characterGlow" class="absolute w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-gradient-to-tr from-farm-accent/30 to-farm-gold/40 blur-xl transition-all duration-500"></div>
+                
+                <div id="characterAvatar" 
+                     role="button" 
+                     tabindex="0" 
+                     aria-label="番茄腦角色互動"
+                     class="relative text-7xl sm:text-8xl animate-float cursor-pointer transition-transform duration-300 active:scale-90 flex items-center justify-center drop-shadow-md select-none focus:outline-none" 
+                     onclick="triggerCharacterTapEffect(event)"
+                     onkeydown="if(event.key==='Enter'||event.key===' '){ triggerCharacterTapEffect(event); }">
+                    🌱
+                </div>
+            </div>
+
+            <h2 id="stageTitle" class="text-2xl sm:text-3xl font-black text-farm-tomato mb-1">
+                01 🌰 神秘種子
+            </h2>
+            <p id="stageDesc" class="text-sm font-bold text-slate-600 px-2 min-h-[2.5rem] flex items-center justify-center">
+                在神祕的宇宙裡從天而降的一顆種子，突然出現在小土壤中，靜靜睡著...
+            </p>
+
+            <div class="w-full mt-4 bg-slate-100 rounded-full h-4 p-0.5 border border-slate-200 overflow-hidden shadow-inner">
+                <div id="progressBar" class="bg-gradient-to-r from-farm-accent to-farm-tomato h-full rounded-full transition-all duration-500 ease-out w-[5%]"></div>
+            </div>
+            
+            <div class="w-full flex justify-between items-center text-xs font-black text-slate-500 mt-1 px-1">
+                <span>0 點</span>
+                <span id="progressText" class="text-farm-tomato text-sm font-black" aria-live="polite">0 / 20</span>
+                <span>20 點</span>
+            </div>
+        </main>
+
+        <section class="bg-farm-card rounded-3xl p-4 sm:p-5 shadow-lg border-4 border-farm-accent/40">
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h3 class="font-extrabold text-slate-700 text-sm sm:text-base flex items-center gap-1.5">
+                    <i class="fa-solid fa-stamp text-farm-tomato"></i>
+                    集點卡進度 (20點)
+                </h3>
+                <span id="stampCountBadge" class="text-xs bg-farm-tomato/10 text-farm-tomato font-black px-2.5 py-1 rounded-full" aria-live="polite">
+                    已收集 0 個番茄
+                </span>
+            </div>
+
+            <div id="stampGrid" class="grid grid-cols-5 gap-2 sm:gap-2.5"></div>
+        </section>
+
+        <div class="flex flex-col gap-3">
+            <button id="addPointBtn" onclick="addPoint(event)" class="w-full bg-gradient-to-b from-farm-tomato to-farm-tomatoHover text-white py-4 sm:py-5 rounded-2xl font-black text-xl sm:text-2xl shadow-lg shadow-farm-tomato/30 active:translate-y-1 active:shadow-md transition-all flex items-center justify-center gap-2 border-b-4 border-red-700 animate-pulse-glow">
+                <span class="text-2xl">🍅</span>
+                <span id="addPointBtnText">收集番茄 +1</span>
+                <span class="text-2xl">✨</span>
+            </button>
+
+            <div class="flex gap-2">
+                <button id="chestBtn" onclick="clickChest()" class="flex-1 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 text-amber-800 py-3 px-3 rounded-2xl font-bold text-sm shadow flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <span id="chestIcon" class="text-2xl">🔒📦</span>
+                    <span id="chestBtnText" class="font-extrabold">神秘大獎寶箱</span>
+                </button>
+
+                <button onclick="confirmReset()" class="bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 py-3 px-4 rounded-2xl font-bold text-xs border border-slate-300 flex items-center justify-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>重置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Dialog -->
+    <div id="customModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border-4 border-farm-accent animate-bounce-short relative overflow-hidden">
+            <div id="modalIcon" class="text-6xl mb-3">📦</div>
+            <h3 id="modalTitle" class="text-xl font-black text-slate-800 mb-2">寶箱提示</h3>
+            <p id="modalMessage" class="text-slate-600 text-sm font-bold mb-6 leading-relaxed">目前還不能打開喔！繼續集點吧～</p>
+            
+            <div id="modalButtons" class="flex gap-3 justify-center">
+                <button onclick="closeModal()" class="w-full bg-farm-accent hover:bg-green-500 text-white font-extrabold py-3 rounded-xl shadow-md transition-all active:scale-95">
+                    知道了！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Modal -->
+    <div id="rewardModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-amber-50 to-orange-50 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-farm-gold animate-bounce-short relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 text-8xl opacity-20">👑</div>
+            <div class="absolute -bottom-10 -left-10 text-8xl opacity-20">🧠</div>
+
+            <div class="text-7xl mb-2 animate-bounce">🎁</div>
+            <span class="inline-block bg-farm-gold text-amber-950 font-black text-xs px-3 py-1 rounded-full mb-2">
+                恭喜收集 20 點集點！
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-black text-farm-tomato mb-2">
+                進化超級番茄腦！
+            </h2>
+            <p class="text-slate-700 text-sm font-bold mb-5 leading-relaxed bg-white/80 p-4 rounded-2xl border border-amber-200">
+                「成為超級番茄腦!!雖然不能征服全宇宙，但可以拿到神祕小禮物！」
+            </p>
+
+            <div class="bg-gradient-to-r from-red-500 to-amber-500 text-white p-4 rounded-2xl shadow-inner mb-6 text-center">
+                <div class="text-xs opacity-90 mb-1 font-bold">🏆 獲得專屬禮物</div>
+                <div id="prizeTitle" class="text-xl font-black">【專屬獎勵兌換券】</div>
+                <div class="text-[10px] opacity-75 mt-1">憑此畫面向女友兌換專屬獎勵！</div>
+            </div>
+
+            <button onclick="closeRewardModal()" class="w-full bg-gradient-to-r from-farm-tomato to-amber-500 text-white font-black text-lg py-3.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all">
+                太棒了！認領禮物
+            </button>
+        </div>
+    </div>
+
+    <!-- 邏輯腳本 -->
+    <script>
+        const STAGES = [
+            { level: 0,  title: "00 🕳️ 世界上某處的小土壤", icon: "🕳️", desc: "在世界上某一處的小土壤！" },
+            { level: 1,  title: "01 🌰 神秘種子", icon: "🌰", desc: "某天雷雨交織的夜晚中，從空中掉落一顆未知的種子..." },
+            { level: 2,  title: "02 🌱 發芽", icon: "🌱", desc: "某天，從小土壤中'啵'的出現了一片小葉子" },
+            { level: 3,  title: "03 🌿 小苗", icon: "🌿", desc: "努力呼吸長大的小葉子，正在向上長高。" },
+            { level: 4,  title: "04 💧 澆水", icon: "💧", desc: "在雨季裡，天空降下新鮮的雨水，讓乾渴的土壤得到滋潤" },
+            { level: 5,  title: "05 🌿 幼苗", icon: "🌿", desc: "經過大雨的洗禮後，小葉又長高了一點點點點點" },
+            { level: 6,  title: "06 🌿 茂盛", icon: "🌿", desc: "又經過了一陣子，幼苗開始越來越高大" },
+            { level: 7,  title: "07 🐝 花苞", icon: "🐝", desc: "在某天的夜晚悄悄結出小花苞，出現了會咬人的小蜜蜂'小黃'" },
+            { level: 8,  title: "08 🌼 開花", icon: "🌼", desc: "小黃帶著花苞去世界各地玩，努力的播種中..讓世界滿地花花" },
+            { level: 9,  title: "09 🟢 青果", icon: "🟢", desc: "花兒度過花期，開始結果了，出現未知的果實" },
+            { level: 10, title: "10 🟢 小青果", icon: "🟢", desc: "小青果圓滾滾的，但這時候還不曉得他到底是什麼呢!!?" },
+            { level: 11, title: "11 🟢 大青果", icon: "🟢", desc: "青果變得碩大，開始變成圓滾滾的孩子了" },
+            { level: 12, title: "12 ☀️ 曬太陽", icon: "☀️", desc: "夏日的陽光灑在身上，光影交織在青果上形成一幅令人印象深刻的畫面" },
+            { level: 13, title: "13 🟠 橘番茄", icon: "🟠", desc: "皮膚漸漸變成橘色，像是看出什麼端倪來" },
+            { level: 14, title: "14 🍅 紅番茄", icon: "🍅", desc: "原來，是顆番茄啊" },
+            { level: 15, title: "15 🍅 成熟", icon: "🍅", desc: "成熟度 100%！看起來很好吃的感覺，好適合夜晚配酒下肚" },
+            { level: 16, title: "16 🧺 採收", icon: "🧺", desc: "小黃咚咚咚地過來將番茄採收入袋" },
+            { level: 17, title: "17 👀 覺醒", icon: "👀", desc: "疑!等等……這顆番茄好像長出了眼睛與思想！？" },
+            { level: 18, title: "18 🧠 番茄腦", icon: "🧠", desc: "大腦細胞開始運作，番茄腦正在思考一些奇奇怪怪的問題" },
+            { level: 19, title: "19 👑 番茄王", icon: "👑", desc: "恩，我要成為番茄王，然後佔領這個世界，番茄王大喊著" },
+            { level: 20, title: "20 👑🧠 超級番茄腦", icon: "👑🧠", desc: "🎉 叮!!進化成超級番茄腦，就在要征服全宇宙的最後一步，被超級小黃抓走了，世界獲得了和平，真是可喜可賀可喜可賀" }
+        ];
+
+        const FIREBASE_URL = 'https://project-3607487821689274503-default-rtdb.firebaseio.com/tomatoPoints.json';
+        let currentPoints = 0;
+        let isBgmPlaying = false;
+        let audioCtx = null;
+        let saveDebounceTimer = null;
+        let comboCount = 0;
+        let comboTimer = null;
+
+        const bgm = document.getElementById('bgmAudio');
+
+        // 音樂淡入淡出切換
+        function toggleBGM() {
+            const icon = document.getElementById('bgmIcon');
+            const text = document.getElementById('bgmStatusText');
+
+            if (isBgmPlaying) {
+                fadeAudioOut(() => {
+                    bgm.pause();
+                    isBgmPlaying = false;
+                    icon.className = "fa-solid fa-music text-slate-400";
+                    text.innerText = "音樂 OFF";
+                });
+            } else {
+                bgm.volume = 0;
+                bgm.muted = false;
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isBgmPlaying = true;
+                        fadeAudioIn();
+                        icon.className = "fa-solid fa-compact-disc text-farm-tomato animate-spin";
+                        text.innerText = "音樂 ON";
+                    }).catch(err => {
+                        isBgmPlaying = false;
+                        icon.className = "fa-solid fa-music text-slate-400";
+                        text.innerText = "點擊播放";
+                    });
+                }
+            }
+        }
+
+        function fadeAudioIn() {
+            let v = 0;
+            const timer = setInterval(() => {
+                v += 0.05;
+                if (v >= 0.5) { bgm.volume = 0.5; clearInterval(timer); }
+                else { bgm.volume = v; }
+            }, 30);
+        }
+
+        function fadeAudioOut(callback) {
+            let v = bgm.volume;
+            const timer = setInterval(() => {
+                v -= 0.05;
+                if (v <= 0) { bgm.volume = 0; clearInterval(timer); if (callback) callback(); }
+                else { bgm.volume = v; }
+            }, 30);
+        }
+
+        function autoUnlockAudio() {
+            if (!isBgmPlaying) { toggleBGM(); }
+            document.removeEventListener('click', autoUnlockAudio);
+            document.removeEventListener('touchstart', autoUnlockAudio);
+        }
+        document.addEventListener('click', autoUnlockAudio);
+        document.addEventListener('touchstart', autoUnlockAudio);
+
+        // 按鈕點擊音效
+        function playPopSound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                
+                const pitchBoost = Math.min(comboCount * 30, 300);
+                osc.frequency.setValueAtTime(400 + pitchBoost, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800 + pitchBoost, audioCtx.currentTime + 0.08);
+                
+                gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) {}
+        }
+
+        // 歡樂慶祝音樂（通關獲獎音效）
+        function playVictorySound() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+
+                // 歡樂分解和弦音符頻率 (C5, E5, G5, C6)
+                const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+                const now = audioCtx.currentTime;
+
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + index * 0.12);
+
+                    gain.gain.setValueAtTime(0, now + index * 0.12);
+                    gain.gain.linearRampToValueAtTime(0.6, now + index * 0.12 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.12 + 0.5);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now + index * 0.12);
+                    osc.stop(now + index * 0.12 + 0.5);
+                });
+            } catch (e) {}
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            loadProgressFromCloud();
+        });
+
+        async function loadProgressFromCloud() {
+            try {
+                const res = await fetch(FIREBASE_URL);
+                const data = await res.json();
+                if (data !== null && !isNaN(data)) {
+                    currentPoints = parseInt(data, 10);
+                } else {
+                    currentPoints = 0;
+                }
+            } catch (e) {
+                const saved = localStorage.getItem('tomato_brain_farm_points');
+                currentPoints = saved ? parseInt(saved, 10) : 0;
+            }
+            updateUI(false);
+        }
+
+        // Firebase 防爆點節流儲存 (Debounced Save)
+        function saveProgressToCloud() {
+            localStorage.setItem('tomato_brain_farm_points', currentPoints.toString());
+            
+            clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(async () => {
+                try {
+                    await fetch(FIREBASE_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(currentPoints)
+                    });
+                } catch (e) {}
+            }, 400);
+        }
+
+        function handleCombo(e) {
+            comboCount++;
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => { comboCount = 0; }, 1200);
+
+            if (comboCount > 1) {
+                showComboText(e, comboCount);
+            }
+        }
+
+        function showComboText(e, count) {
+            let x = e.clientX, y = e.clientY;
+            if (!x || !y) {
+                const rect = document.getElementById('addPointBtn').getBoundingClientRect();
+                x = rect.left + rect.width / 2;
+                y = rect.top;
+            }
+
+            const comboEl = document.createElement('div');
+            comboEl.className = 'combo-text text-xl sm:text-2xl';
+            comboEl.innerText = `Combo x${count}! 🔥`;
+            comboEl.style.left = x + 'px';
+            comboEl.style.top = y + 'px';
+
+            document.body.appendChild(comboEl);
+            setTimeout(() => comboEl.remove(), 700);
+        }
+
+        function addPoint(e) {
+            if (currentPoints >= 20) {
+                showModal("恭喜收集滿20點咯！", "你已經成為最頂級的【超級番茄腦】！快點擊下方解鎖專屬大獎吧！", "👑");
+                triggerConfetti();
+                playVictorySound();
+                return;
+            }
+
+            const oldPoints = currentPoints;
+            currentPoints++;
+            saveProgressToCloud();
+            
+            handleCombo(e);
+            updateUI(oldPoints !== currentPoints);
+            playPopSound();
+
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
+
+            const btn = document.getElementById('addPointBtn');
+            btn.classList.add('animate-bounce-short');
+            setTimeout(() => btn.classList.remove('animate-bounce-short'), 300);
+
+            createClickParticles(e);
+
+            if (currentPoints === 20) {
+                setTimeout(() => {
+                    triggerConfetti();
+                    openRewardModal();
+                }, 400);
+            }
+        }
+
+        function triggerCharacterTapEffect(e) {
+            createClickParticles(e);
+            playPopSound();
+            const avatar = document.getElementById('characterAvatar');
+            avatar.classList.add('animate-shake');
+            setTimeout(() => avatar.classList.remove('animate-shake'), 400);
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('stampGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 20; i++) {
+                const stamp = document.createElement('div');
+                stamp.id = `stamp-${i}`;
+                stamp.className = `aspect-square rounded-2xl flex flex-col items-center justify-center border-2 text-xs font-black transition-all duration-300 relative overflow-hidden select-none`;
+                grid.appendChild(stamp);
+            }
+        }
+
+        function updateUI(isEvolving = false) {
+            const stage = STAGES[currentPoints] || STAGES[0];
+            const avatar = document.getElementById('characterAvatar');
+
+            avatar.innerText = stage.icon;
+            if (isEvolving) {
+                avatar.classList.add('animate-evolve');
+                setTimeout(() => avatar.classList.remove('animate-evolve'), 600);
+            }
+
+            document.getElementById('stageTitle').innerText = stage.title;
+            document.getElementById('stageDesc').innerText = stage.desc;
+
+            document.getElementById('stageBadgeText').innerText = `階段 ${currentPoints} / 20`;
+            document.getElementById('progressText').innerText = `${currentPoints} / 20`;
+            
+            const progressPercent = Math.max((currentPoints / 20) * 100, 5);
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+
+            for (let i = 1; i <= 20; i++) {
+                const stamp = document.getElementById(`stamp-${i}`);
+                if (stamp) {
+                    if (i <= currentPoints) {
+                        stamp.className = `aspect-square rounded-2xl flex flex-col items-center justify-center border-2 border-farm-tomato bg-gradient-to-b from-red-50 to-orange-100 text-farm-tomato shadow-sm font-black transition-all duration-300 transform scale-105`;
+                        stamp.innerHTML = `<span class="text-base sm:text-lg animate-bounce-short">🍅</span><span class="text-[10px] text-red-500 font-extrabold mt-0.5">${i}</span>`;
+                    } else {
+                        stamp.className = `aspect-square rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/80 text-slate-300 font-bold transition-all duration-300`;
+                        stamp.innerHTML = `<span class="text-sm opacity-40">🌱</span><span class="text-[10px] opacity-60">${i}</span>`;
+                    }
+                }
+            }
+
+            document.getElementById('stampCountBadge').innerText = `已收集 ${currentPoints} 個番茄`;
+
+            const chestBtn = document.getElementById('chestBtn');
+            const chestIcon = document.getElementById('chestIcon');
+            const chestText = document.getElementById('chestBtnText');
+            const addPointBtnText = document.getElementById('addPointBtnText');
+
+            if (currentPoints === 20) {
+                chestIcon.innerText = "🔓";
+                chestText.innerText = "點擊進化成邪惡番茄腦吧！";
+                chestBtn.className = "flex-1 bg-gradient-to-r from-farm-gold to-amber-400 border-2 border-amber-500 text-amber-950 py-3 px-3 rounded-2xl font-black text-sm shadow-lg animate-pulse-glow flex items-center justify-center gap-2 transition-all active:scale-95";
+                addPointBtnText.innerText = "已到達最高階段 👑";
+            } else if (currentPoints >= 19) {
+                chestIcon.innerText = "🔒📦";
+                chestText.innerText = "好像快成功了...?";
+                chestBtn.className = "flex-1 bg-amber-100 border-2 border-amber-400 text-amber-900 py-3 px-3 rounded-2xl font-bold text-sm shadow flex items-center justify-center gap-2 transition-all active:scale-95";
+                addPointBtnText.innerText = "收集番茄 +1";
+            } else {
+                chestIcon.innerText = "🔒";
+                chestText.innerText = "神秘小禮物";
+                chestBtn.className = "flex-1 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 text-amber-800 py-3 px-3 rounded-2xl font-bold text-sm shadow flex items-center justify-center gap-2 transition-all active:scale-95";
+                addPointBtnText.innerText = "收集番茄 +1";
+            }
+        }
+
+        function createClickParticles(e) {
+            const emojis = ['🍅', '✨', '🌱', '⭐', '💖', '🧠'];
+            const container = document.body;
+
+            let x = e.clientX, y = e.clientY;
+            if (!x || !y) {
+                const rect = document.getElementById('addPointBtn').getBoundingClientRect();
+                x = rect.left + rect.width / 2;
+                y = rect.top + rect.height / 2;
+            }
+
+            const count = Math.min(6 + comboCount, 12);
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle text-2xl';
+                particle.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 60 + Math.random() * 90;
+                const tx = Math.cos(angle) * dist + 'px';
+                const ty = Math.sin(angle) * dist + 'px';
+                const rot = (Math.random() - 0.5) * 360 + 'deg';
+
+                particle.style.setProperty('--tx', tx);
+                particle.style.setProperty('--ty', ty);
+                particle.style.setProperty('--rot', rot);
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+
+                container.appendChild(particle);
+                setTimeout(() => particle.remove(), 800);
+            }
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+
+                setTimeout(() => {
+                    confetti({ particleCount: 50, angle: 60, spread: 55, origin: { x: 0 } });
+                    confetti({ particleCount: 50, angle: 120, spread: 55, origin: { x: 1 } });
+                }, 250);
+            }
+        }
+
+        function clickChest() {
+            if (currentPoints < 19) {
+                showModal("🔒 寶箱被神秘力量控制中", "目前還不能打開！繼續加油「收集番茄 +1」，努力去成為邪惡番茄腦吧!", "🔒📦");
+            } else if (currentPoints === 19) {
+                showModal("🔒 寶箱晃動中...", "……好像快可以打開了！再收集最後 1 個番茄就能成為邪惡番茄腦了！", "📦");
+            } else {
+                openRewardModal();
+                triggerConfetti();
+            }
+        }
+
+        function showModal(title, message, icon = "💡") {
+            document.getElementById('modalIcon').innerText = icon;
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalMessage').innerText = message;
+            
+            const btnArea = document.getElementById('modalButtons');
+            btnArea.innerHTML = `
+                <button onclick="closeModal()" class="w-full bg-farm-accent hover:bg-green-500 text-white font-extrabold py-3 rounded-xl shadow-md transition-all active:scale-95">
+                    知道了！
+                </button>
+            `;
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').classList.add('hidden');
+        }
+
+        function openRewardModal() {
+            document.getElementById('rewardModal').classList.remove('hidden');
+            playVictorySound();
+        }
+
+        function closeRewardModal() {
+            document.getElementById('rewardModal').classList.add('hidden');
+        }
+
+        function confirmReset() {
+            document.getElementById('modalIcon').innerText = "🔄";
+            document.getElementById('modalTitle').innerText = "重新征服宇宙？";
+            document.getElementById('modalMessage').innerText = "確定要將點數重置為 0 嗎？之前的番茄進化進度將會重新開始喔！";
+            
+            const btnArea = document.getElementById('modalButtons');
+            btnArea.innerHTML = `
+                <button onclick="closeModal()" class="flex-1 bg-slate-200 text-slate-700 font-extrabold py-2.5 rounded-xl transition-all active:scale-95">
+                    取消
+                </button>
+                <button onclick="executeReset()" class="flex-1 bg-farm-tomato text-white font-extrabold py-2.5 rounded-xl shadow-md transition-all active:scale-95">
+                    確定重置
+                </button>
+            `;
+
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function executeReset() {
+            currentPoints = 0;
+            saveProgressToCloud();
+            updateUI(true);
+            closeModal();
+        }
+    </script>
+</body>
+</html>
